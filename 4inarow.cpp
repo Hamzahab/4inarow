@@ -54,7 +54,7 @@ void setup() {
 	tft.setRotation(3);
 }
 int columns = 0, rows = 5;
-int fourinarow[6][7];		// fourinarow[row][col]
+int fourinarow[7][6];		// fourinarow[col][row]
 
 void drawGrid(){
 	//horizontal lines
@@ -81,11 +81,12 @@ void checkFill(){
 	//checks the closest piece thats filled, then makes sure to fill the
 	//one above it
 	Serial.println("CHECKING BUDDY");
-	for(int i = 0;i < 5;i++){
+	for(int i = 0;i <= 5;i++){
+		// Serial.print("actual value");Serial.println(fourinarow[columns][i]);
 		if(fourinarow[columns][i] == 1){
 			 Serial.print("row: ");Serial.println(i);
 			 Serial.print("col: ");Serial.println(columns);
-			rows = i;
+			rows = i-1;
 			break;
 		}
 		else rows = 5;
@@ -93,9 +94,9 @@ void checkFill(){
 }
 
 void drawPiece(){
-	Serial.println("in here");
-	for(int col = 0;col < 7;col++){
-		for(int row = 5; row > 0;row--){
+	// Serial.println("in here");
+	for(int col = 0;col <= 6;col++){
+		for(int row = 5; row >= 0;row--){
 			// Serial.print("row: ");Serial.println(row);
 			// Serial.print("col: ");Serial.println(col);
 			// Serial.print("value: ");Serial.println(fourinarow[col][row]);
@@ -133,30 +134,31 @@ void processMovement(){
 			Serial.println("in here (space pressed)");
 			//whatever column should remain the same, row should be filled with 1 (for reference)
 			fourinarow[columns][rows] = 1;
-			//draw circle at position [columns][rows]
 			Serial.print("Col is: ");Serial.print(columns);Serial.print(" Row is:");Serial.println(rows);
 			Serial.println(readKey,HEX);
 
+			drawPiece();
 
 			//row-- (therefore next time we'll draw at [columns][rows-1])
-			if(rows >= 0){
-				rows--;
-				drawPiece();
+			if(rows > 0){
+				// drawPiece();
+				 rows--;
+				// drawPiece();
+
+				//draw circle at position [columns][rows]
+
 			}
 		}
 	}
 }
 int main() {
 	setup();
-	Serial.println("here");
 	// fill the screen with black
 	tft.fillScreen(ILI9341_BLACK);
-
 
 	//draw background grid
 	drawGrid();
 
-	Serial.println("getting here");
 	//prefill array with 0
 	for(int i = 0;i < 6;i++){
 		for(int c = 0; c < 7;c++){
@@ -164,6 +166,7 @@ int main() {
 		}
 	}
 	Serial.println("got out");
+
 	while(true){
 		processMovement();
 	}
