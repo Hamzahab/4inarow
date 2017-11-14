@@ -1,12 +1,9 @@
 /*
 4 in a row game
-
 6 row seven column grid base
 See adafruit-gfx-graphics-library.pdf on eClass (associated with Lecture 11),
 for more details on these and other functions in the graphics library.
-
 By default, the display has a width of 240 pixels and a height of 320 pixels.
-
 However: the orientation we will use for the assignment is horizontal
 so one should think of the width as 320 and the height as 240. This is why
 we do tft.setRotation(3);
@@ -54,7 +51,15 @@ void setup() {
 	tft.setRotation(3);
 }
 int columns = 0, rows = 5;
-int fourinarow[7][6];		// fourinarow[col][row]
+int fourinarow[7][6];        // fourinarow[col][row]
+
+/* this function will act to check if 4 in a row has been achieved
+once a piece is dropped. It will check if a diagnol, vertical, or horizontal
+row of pieces have been dropped. If so, game over and the said individual has won */
+void wonGame(){
+	
+}
+
 
 void drawGrid(){
 	//horizontal lines
@@ -83,71 +88,115 @@ void checkFill(){
 	Serial.println("CHECKING BUDDY");
 	for(int i = 0;i <= 5;i++){
 		// Serial.print("actual value");Serial.println(fourinarow[columns][i]);
-		if(fourinarow[columns][i] == 1){
-			 Serial.print("row: ");Serial.println(i);
-			 Serial.print("col: ");Serial.println(columns);
+		if(fourinarow[columns][i] == 1 || fourinarow[columns][i] == 2){
+			Serial.print("row: ");Serial.println(i);
+			Serial.print("col: ");Serial.println(columns);
 			rows = i-1;
 			break;
 		}
 		else rows = 5;
 	}
 }
+bool isCPU = false;
 
 void drawPiece(){
 	// Serial.println("in here");
-	for(int col = 0;col <= 6;col++){
-		for(int row = 5; row >= 0;row--){
-			// Serial.print("row: ");Serial.println(row);
-			// Serial.print("col: ");Serial.println(col);
-			// Serial.print("value: ");Serial.println(fourinarow[col][row]);
+	if(!isCPU){
+		for(int col = 0;col <= 6;col++){
+			for(int row = 5; row >= 0;row--){
+				// Serial.print("row: ");Serial.println(row);
+				// Serial.print("col: ");Serial.println(col);
+				// Serial.print("value: ");Serial.println(fourinarow[col][row]);
 
-			if(fourinarow[col][row] == 1){
-				tft.drawCircle(col*50+22-col*3,TFT_HEIGHT-(5-row)*39-21,15,WHITE);
-				tft.fillCircle(col*50+22-col*3,TFT_HEIGHT-(5-row)*39-21,15,WHITE);
+				if(fourinarow[col][row] == 1){
+					tft.drawCircle(col*50+22-col*3,TFT_HEIGHT-(5-row)*39-21,15,WHITE);
+					tft.fillCircle(col*50+22-col*3,TFT_HEIGHT-(5-row)*39-21,15,WHITE);
+				}
+			}
+		}
+	}
+	else{
+		for(int col = 0;col <= 6;col++){
+			for(int row = 5; row >= 0;row--){
+
+				if(fourinarow[col][row] == 2){
+					tft.drawCircle(col*50+22-col*3,TFT_HEIGHT-(5-row)*39-21,15,YELLOW);
+					tft.fillCircle(col*50+22-col*3,TFT_HEIGHT-(5-row)*39-21,15,YELLOW);
+				}
 			}
 		}
 	}
 	// Serial.println("GOT OUT");
 }
-// bool columnchange = false
 void processMovement(){
 	enum condition {player,CPU};
 	condition state = player;
-
 	char readKey;
-	if(state == player){
-		if(Serial.available() > 0){
-			readKey = Serial.read();
-			Serial.println(readKey);
-		}
-		//left and right movements
-		if(readKey == 'a' && columns > 0){
-			columns--;
-			checkFill();
-		}
-		else if(readKey == 's' && columns < 6){
-			columns++;
-			checkFill();
-		}
-		//if space is pressed
-		else if(readKey == 0x20){
-			Serial.println("in here (space pressed)");
-			//whatever column should remain the same, row should be filled with 1 (for reference)
-			fourinarow[columns][rows] = 1;
-			Serial.print("Col is: ");Serial.print(columns);Serial.print(" Row is:");Serial.println(rows);
-			Serial.println(readKey,HEX);
+	while(true){
+		if(state == player){
+			isCPU = false;
+			if(Serial.available() > 0){
+				readKey = Serial.read();
+				Serial.println(readKey);
+			}
+			//left and right movements
+			if(readKey == 'a' && columns > 0){
+				columns--;
+				checkFill();
+				readKey = 'b';
 
+			}
+			else if(readKey == 's' && columns < 6){
+				columns++;
+				checkFill();
+				readKey = 'b';
+
+			}
+			//if space is pressed
+			else if(readKey == 0x20){
+				Serial.println("in here (space pressed)");
+				//whatever column should remain the same, row should be filled with 1 (for reference)
+				fourinarow[columns][rows] = 1;
+				Serial.print("Col is: ");Serial.print(columns);Serial.print(" Row is:");Serial.println(rows);
+				Serial.println(readKey,HEX);
+
+				//draw circle at position [columns][rows]
+				drawPiece();
+
+				//row-- (therefore next time we'll draw at [columns][rows-1])
+				if(rows > 0){
+					rows--;
+				}
+				 state = CPU;
+				readKey = 'b';
+			}
+		}
+
+		else if(state == CPU){
+			columns = random(7);
+			Serial.print("column is': ");Serial.println(columns);
+			Serial.print("row is': ");Serial.println(rows);
+
+			checkFill();
+
+			while(rows == 0){
+
+				//keep generating random columns until we find one that isnt filled
+				columns = random(0,7);
+				checkFill();
+				Serial.println("IN HERE MATE");
+			}
+
+			fourinarow[columns][rows] = 2;
+			isCPU = true;
+			//draw circle at position [columns][rows]
 			drawPiece();
 
 			//row-- (therefore next time we'll draw at [columns][rows-1])
 			if(rows > 0){
-				// drawPiece();
-				 rows--;
-				// drawPiece();
-
-				//draw circle at position [columns][rows]
-
+				rows--;
 			}
+			state = player;
 		}
 	}
 }
@@ -167,9 +216,8 @@ int main() {
 	}
 	Serial.println("got out");
 
-	while(true){
-		processMovement();
-	}
+	processMovement();
+
 
 	Serial.end();
 
