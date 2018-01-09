@@ -1,0 +1,5 @@
+prog:fourinarow.cpp
+	g++ -g fourinarow.cpp -o fourinarow -Wall
+
+clean:
+	@rm -f prog
